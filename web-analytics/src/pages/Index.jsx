@@ -1,6 +1,16 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
-import { Eye, Users, TrendingUp, Clock, Globe, Smartphone, Monitor, Tablet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Eye,
+  Users,
+  TrendingUp,
+  Clock,
+  Globe,
+  Smartphone,
+  Monitor,
+  Tablet,
+  MousePointerClick,
+} from 'lucide-react';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import StatsCard from '../components/StatsCard';
@@ -12,6 +22,12 @@ import DeviceBreakdown from '../components/DeviceBreakdown';
 
 const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [analytics, setAnalytics] = useState({
+    totalVisitors: 0,
+    pageViews: 0,
+    totalClicks: 0,
+    totalTimeSpent: 0,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -20,14 +36,35 @@ const Index = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const mockStats = {
-    totalVisitors: 45782,
-    pageViews: 128945,
-    bounceRate: 34.2,
-    avgSessionDuration: 185,
-    todayVisitors: 2847,
-    realTimeVisitors: 127
-  };
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const data = await res.json();
+
+        const uniqueDevices = new Set();
+        let clicks = 0;
+        let timeSpent = 0;
+
+        data.forEach(entry => {
+          uniqueDevices.add(entry.device_id);
+          clicks += entry.clicks || 0;
+          timeSpent += entry.timeOnPage || 0;
+        });
+
+        setAnalytics({
+          totalVisitors: uniqueDevices.size,
+          pageViews: data.length,
+          totalClicks: clicks,
+          totalTimeSpent: timeSpent,
+        });
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -56,42 +93,38 @@ const Index = () => {
       <main className="container mx-auto px-6 py-8">
         {/* Real-time Banner */}
         <div className="mb-8">
-          <RealTimeVisitors count={mockStats.realTimeVisitors} />
+          <RealTimeVisitors count={analytics.totalVisitors} />
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
             title="Total Visitors"
-            value={mockStats.totalVisitors.toLocaleString()}
+            value={analytics.totalVisitors.toLocaleString()}
             icon={<Users className="w-6 h-6" />}
-            trend={12.5}
             color="from-blue-500 to-cyan-500"
           />
           <StatsCard
             title="Page Views"
-            value={mockStats.pageViews.toLocaleString()}
+            value={analytics.pageViews.toLocaleString()}
             icon={<Eye className="w-6 h-6" />}
-            trend={8.2}
             color="from-green-500 to-emerald-500"
           />
           <StatsCard
-            title="Bounce Rate"
-            value={`${mockStats.bounceRate}%`}
-            icon={<TrendingUp className="w-6 h-6" />}
-            trend={-2.1}
-            color="from-orange-500 to-red-500"
+            title="Total Clicks"
+            value={analytics.totalClicks.toLocaleString()}
+            icon={<MousePointerClick className="w-6 h-6" />}
+            color="from-orange-500 to-yellow-500"
           />
           <StatsCard
-            title="Session Duration"
-            value={`${Math.floor(mockStats.avgSessionDuration / 60)}m ${mockStats.avgSessionDuration % 60}s`}
+            title="Total Time Spent"
+            value={`${Math.floor(analytics.totalTimeSpent / 60)}m ${analytics.totalTimeSpent % 60}s`}
             icon={<Clock className="w-6 h-6" />}
-            trend={15.3}
             color="from-purple-500 to-pink-500"
           />
         </div>
 
-        {/* Main Dashboard */}
+        {/* Main Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-black/20 backdrop-blur-lg border border-white/10">
             <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white/20">
