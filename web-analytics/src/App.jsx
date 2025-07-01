@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import Login from './components/auth/login';
-import Signup from './components/auth/signup'; // make sure this file exists
+import Signup from './components/auth/signup';
 
 function App() {
   return (
