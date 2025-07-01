@@ -1,25 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Globe, MapPin } from 'lucide-react';
 
-const GeographicMap = () => {
-  const countryData = [
-    { country: 'United States', visitors: 18245, percentage: 45.2, flag: '🇺🇸' },
-    { country: 'United Kingdom', visitors: 8932, percentage: 22.1, flag: '🇬🇧' },
-    { country: 'Canada', visitors: 4521, percentage: 11.2, flag: '🇨🇦' },
-    { country: 'Germany', visitors: 3210, percentage: 7.9, flag: '🇩🇪' },
-    { country: 'France', visitors: 2156, percentage: 5.3, flag: '🇫🇷' },
-    { country: 'Australia', visitors: 1876, percentage: 4.6, flag: '🇦🇺' },
-    { country: 'Japan', visitors: 1542, percentage: 3.8, flag: '🇯🇵' }
-  ];
+// Get emoji flag from ISO country code
+const getFlag = (countryCode) => {
+  if (!countryCode) return '🏳️';
+  return countryCode
+    .toUpperCase()
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt()));
+};
 
-  const cityData = [
-    { city: 'New York', country: 'US', visitors: 5420 },
-    { city: 'London', country: 'UK', visitors: 4321 },
-    { city: 'Toronto', country: 'CA', visitors: 2156 },
-    { city: 'Berlin', country: 'DE', visitors: 1876 },
-    { city: 'Paris', country: 'FR', visitors: 1542 }
-  ];
+const GeographicMap = () => {
+  const [countryData, setCountryData] = useState([]);
+  const [cityData, setCityData] = useState([]);
+
+  useEffect(() => {
+    const fetchTrackingData = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const data = await res.json();
+
+        const countryMap = {};
+        const cityMap = {};
+        const total = data.length;
+
+        data.forEach((item) => {
+          const location = item.locationInfo || {};
+          const countryCode = location.country || 'UN';
+          const cityName = location.city || 'Unknown';
+
+          // Country aggregation
+          if (!countryMap[countryCode]) {
+            countryMap[countryCode] = {
+              visitors: 1,
+            };
+          } else {
+            countryMap[countryCode].visitors++;
+          }
+
+          // City aggregation
+          const cityKey = `${cityName},${countryCode}`;
+          if (!cityMap[cityKey]) {
+            cityMap[cityKey] = {
+              city: cityName,
+              country: countryCode,
+              visitors: 1,
+            };
+          } else {
+            cityMap[cityKey].visitors++;
+          }
+        });
+
+        const countryArr = Object.entries(countryMap)
+          .map(([code, info]) => ({
+            country: code,
+            visitors: info.visitors,
+            percentage: ((info.visitors / total) * 100).toFixed(1),
+            flag: getFlag(code),
+          }))
+          .sort((a, b) => b.visitors - a.visitors)
+          .slice(0, 7); // top 7 countries
+
+        const cityArr = Object.values(cityMap)
+          .sort((a, b) => b.visitors - a.visitors)
+          .slice(0, 5); // top 5 cities
+
+        setCountryData(countryArr);
+        setCityData(cityArr);
+      } catch (error) {
+        console.error('Failed to fetch geographic tracking data', error);
+      }
+    };
+
+    fetchTrackingData();
+  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -48,9 +102,9 @@ const GeographicMap = () => {
                 <div className="text-right">
                   <p className="text-white font-semibold">{country.visitors.toLocaleString()}</p>
                   <div className="w-20 h-2 bg-white/10 rounded-full mt-1">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000"
-                      style={{ width: `${country.percentage * 2}%` }}
+                      style={{ width: `${country.percentage * 2}%` }} // visual boost
                     ></div>
                   </div>
                 </div>

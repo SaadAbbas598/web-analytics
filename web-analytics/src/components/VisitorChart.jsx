@@ -1,17 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import dayjs from 'dayjs';
 
 const VisitorChart = () => {
-  const data = [
-    { name: 'Mon', visitors: 4200, pageViews: 8400 },
-    { name: 'Tue', visitors: 3800, pageViews: 7600 },
-    { name: 'Wed', visitors: 5200, pageViews: 10400 },
-    { name: 'Thu', visitors: 4800, pageViews: 9600 },
-    { name: 'Fri', visitors: 6200, pageViews: 12400 },
-    { name: 'Sat', visitors: 5800, pageViews: 11600 },
-    { name: 'Sun', visitors: 4600, pageViews: 9200 }
-  ];
+  const [chartData, setChartData] = useState([]);
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const rawData = await res.json();
+
+        // Initialize 7-day stats
+        const dayStats = {
+          Mon: { visitors: new Set(), pageViews: 0 },
+          Tue: { visitors: new Set(), pageViews: 0 },
+          Wed: { visitors: new Set(), pageViews: 0 },
+          Thu: { visitors: new Set(), pageViews: 0 },
+          Fri: { visitors: new Set(), pageViews: 0 },
+          Sat: { visitors: new Set(), pageViews: 0 },
+          Sun: { visitors: new Set(), pageViews: 0 }
+        };
+
+        rawData.forEach(entry => {
+          const lastVisitDate = entry.lastVisit?.$date || entry.date;
+          if (!lastVisitDate) return;
+
+          const day = dayjs(lastVisitDate).format('ddd'); // 'Mon', 'Tue', etc.
+          const ip = entry.ip;
+
+          if (dayStats[day]) {
+            if (ip) dayStats[day].visitors.add(ip);
+            dayStats[day].pageViews += 1; // each entry is 1 page view
+          }
+        });
+
+        const formatted = Object.entries(dayStats).map(([day, stats]) => ({
+          name: day,
+          visitors: stats.visitors.size,
+          pageViews: stats.pageViews
+        }));
+
+        setChartData(formatted);
+      } catch (err) {
+        console.error('Error loading chart data:', err);
+      }
+    };
+
+    fetchChartData();
+  }, []);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -40,7 +78,7 @@ const VisitorChart = () => {
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="visitorsGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>

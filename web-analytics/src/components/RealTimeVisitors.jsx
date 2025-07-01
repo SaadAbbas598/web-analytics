@@ -1,28 +1,40 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Activity } from 'lucide-react';
 
-const RealTimeVisitors = ({ count }) => {
-  const [animatedCount, setAnimatedCount] = useState(0);
+const RealTimeVisitors = () => {
+  const [visitorCount, setVisitorCount] = useState(0);
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
+    const fetchVisitorCount = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const data = await res.json();
+
+        const now = new Date();
+        const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+
+        const liveVisitors = data.filter(item => {
+          const lastVisit = new Date(item.lastVisit?.$date || item.lastVisit);
+          return lastVisit >= fiveMinutesAgo;
+        });
+
+        setVisitorCount(liveVisitors.length);
+      } catch (error) {
+        console.error('Failed to fetch visitor data:', error);
+      }
+    };
+
+    fetchVisitorCount();
     const interval = setInterval(() => {
+      fetchVisitorCount();
       setPulse(true);
       setTimeout(() => setPulse(false), 1000);
-      
-      // Simulate real-time count changes
-      const change = Math.floor(Math.random() * 10) - 5;
-      setAnimatedCount(prev => Math.max(0, prev + change));
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    setAnimatedCount(count);
-  }, [count]);
 
   return (
     <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-lg border-green-500/30">
@@ -34,7 +46,7 @@ const RealTimeVisitors = ({ count }) => {
           </div>
           <div className="text-center">
             <p className="text-green-300 text-sm font-medium">LIVE VISITORS</p>
-            <p className="text-3xl font-bold text-white">{animatedCount.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white">{visitorCount.toLocaleString()}</p>
           </div>
           <Activity className="w-6 h-6 text-green-400" />
         </div>

@@ -30,7 +30,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await fetch("http://webanalytics.softsincs.com/api/signup/", {
+      const response = await fetch("https://webanalytics.softsincs.com/api/signup/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -181,7 +181,7 @@ const Signup = () => {
               </div>
             </div>
 
-            {/* Checkbox */}
+            {/* Terms & Conditions */}
             <div className="flex items-center">
               <input type="checkbox" required className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
               <span className="ml-2 text-sm text-gray-600">

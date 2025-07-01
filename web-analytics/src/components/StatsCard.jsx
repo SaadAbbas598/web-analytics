@@ -1,31 +1,94 @@
-import React from 'react';
-import { Card, CardContent } from '../components/ui/card';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import StatsCard from './StatsCard';
+import { Users, MousePointerClick, Clock } from 'lucide-react';
 
-const StatsCard = ({ title, value, icon, trend, color }) => {
-  const isPositive = trend > 0;
+const StatsOverview = () => {
+  const [trackingData, setTrackingData] = useState([]);
+  const [trendVisitors, setTrendVisitors] = useState(0);
+  const [trendUnique, setTrendUnique] = useState(0);
+  const [trendClicks, setTrendClicks] = useState(0);
+
+  const [prevStats, setPrevStats] = useState({
+    visitors: 0,
+    unique: 0,
+    clicks: 0,
+  });
+
+  useEffect(() => {
+    const fetchTrackingData = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const data = await res.json();
+
+        setTrackingData(data);
+
+        // Current stats
+        const currentVisitors = data.length;
+        const uniqueIPs = new Set(data.map((item) => item.ip));
+        const currentUnique = uniqueIPs.size;
+        const currentClicks = data.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
+
+        // Trends
+        if (prevStats.visitors > 0) {
+          const vChange = (((currentVisitors - prevStats.visitors) / prevStats.visitors) * 100).toFixed(1);
+          setTrendVisitors(parseFloat(vChange));
+        }
+
+        if (prevStats.unique > 0) {
+          const uChange = (((currentUnique - prevStats.unique) / prevStats.unique) * 100).toFixed(1);
+          setTrendUnique(parseFloat(uChange));
+        }
+
+        if (prevStats.clicks > 0) {
+          const cChange = (((currentClicks - prevStats.clicks) / prevStats.clicks) * 100).toFixed(1);
+          setTrendClicks(parseFloat(cChange));
+        }
+
+        setPrevStats({
+          visitors: currentVisitors,
+          unique: currentUnique,
+          clicks: currentClicks,
+        });
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    };
+
+    fetchTrackingData();
+    const interval = setInterval(fetchTrackingData, 10000);
+
+    return () => clearInterval(interval);
+  }, [prevStats]);
+
+  const totalVisitors = trackingData.length;
+  const uniqueUsers = new Set(trackingData.map((item) => item.ip)).size;
+  const totalClicks = trackingData.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
 
   return (
-    <Card className="bg-black/20 backdrop-blur-lg border-white/10 hover:bg-black/30 transition-all duration-300 group">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`w-12 h-12 bg-gradient-to-r ${color} rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300`}>
-            {icon}
-          </div>
-          <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-            isPositive ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
-          }`}>
-            {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            <span>{Math.abs(trend)}%</span>
-          </div>
-        </div>
-        <div>
-          <h3 className="text-2xl font-bold text-white mb-1">{value}</h3>
-          <p className="text-purple-200 text-sm">{title}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StatsCard
+        title="Total Visitors"
+        value={totalVisitors.toLocaleString()}
+        icon={<Users className="w-6 h-6" />}
+        trend={trendVisitors}
+        color="from-blue-500 to-cyan-500"
+      />
+      <StatsCard
+        title="Unique Users"
+        value={uniqueUsers.toLocaleString()}
+        icon={<MousePointerClick className="w-6 h-6" />}
+        trend={trendUnique}
+        color="from-purple-500 to-pink-500"
+      />
+      <StatsCard
+        title="Total Clicks"
+        value={totalClicks.toLocaleString()}
+        icon={<Clock className="w-6 h-6" />}
+        trend={trendClicks}
+        color="from-green-500 to-emerald-500"
+      />
+    </div>
   );
 };
 
-export default StatsCard;
+export default StatsOverview;
