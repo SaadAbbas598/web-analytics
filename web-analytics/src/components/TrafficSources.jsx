@@ -1,17 +1,68 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import React, { useEffect, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '../components/ui/card';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 const VisitorChart = () => {
-  const data = [
-    { name: 'Mon', visitors: 4200, pageViews: 8400 },
-    { name: 'Tue', visitors: 3800, pageViews: 7600 },
-    { name: 'Wed', visitors: 5200, pageViews: 10400 },
-    { name: 'Thu', visitors: 4800, pageViews: 9600 },
-    { name: 'Fri', visitors: 6200, pageViews: 12400 },
-    { name: 'Sat', visitors: 5800, pageViews: 11600 },
-    { name: 'Sun', visitors: 4600, pageViews: 9200 }
-  ];
+  const [data, setData] = useState([]);
+
+  // Fetch and group data by weekday
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const result = await res.json();
+
+        const grouped = {};
+
+        result.forEach(item => {
+          const date = new Date(item.lastVisit.$date);
+          const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }); // e.g., "Mon"
+
+          if (!grouped[weekday]) {
+            grouped[weekday] = {
+              name: weekday,
+              pageViews: 0,
+              visitorsSet: new Set()
+            };
+          }
+
+          grouped[weekday].pageViews += 1;
+          grouped[weekday].visitorsSet.add(item.device_id);
+        });
+
+        const weekdayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+        const chartData = weekdayOrder.map(day => {
+          const entry = grouped[day] || { pageViews: 0, visitorsSet: new Set() };
+          return {
+            name: day,
+            pageViews: entry.pageViews,
+            visitors: entry.visitorsSet.size
+          };
+        });
+
+        setData(chartData);
+      } catch (error) {
+        console.error('Error fetching visitor data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -43,26 +94,17 @@ const VisitorChart = () => {
             <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="visitorsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="pageViewsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 12 }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 12 }}
-              />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"

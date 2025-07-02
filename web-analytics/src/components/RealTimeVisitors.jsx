@@ -1,28 +1,37 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Activity } from 'lucide-react';
 
-const RealTimeVisitors = ({ count }) => {
-  const [animatedCount, setAnimatedCount] = useState(0);
+const RealTimeVisitors = () => {
+  const [liveCount, setLiveCount] = useState(0);
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPulse(true);
-      setTimeout(() => setPulse(false), 1000);
-      
-      // Simulate real-time count changes
-      const change = Math.floor(Math.random() * 10) - 5;
-      setAnimatedCount(prev => Math.max(0, prev + change));
-    }, 3000);
+    const fetchLiveVisitors = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const data = await res.json();
 
+        const now = new Date();
+        const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+
+        const liveVisitors = data.filter(entry => {
+          const lastVisit = new Date(entry.lastVisit?.$date);
+          return lastVisit >= oneMinuteAgo;
+        });
+
+        setPulse(true);
+        setTimeout(() => setPulse(false), 1000);
+        setLiveCount(liveVisitors.length);
+      } catch (err) {
+        console.error('Error fetching live visitors:', err);
+      }
+    };
+
+    fetchLiveVisitors();
+    const interval = setInterval(fetchLiveVisitors, 5000); // refresh every 5 seconds
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    setAnimatedCount(count);
-  }, [count]);
 
   return (
     <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-lg border-green-500/30">
@@ -34,7 +43,7 @@ const RealTimeVisitors = ({ count }) => {
           </div>
           <div className="text-center">
             <p className="text-green-300 text-sm font-medium">LIVE VISITORS</p>
-            <p className="text-3xl font-bold text-white">{animatedCount.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white">{liveCount.toLocaleString()}</p>
           </div>
           <Activity className="w-6 h-6 text-green-400" />
         </div>
@@ -42,4 +51,5 @@ const RealTimeVisitors = ({ count }) => {
     </Card>
   );
 };
+
 export default RealTimeVisitors;
