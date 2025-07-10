@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import dayjs from 'dayjs';
 
 const VisitorChart = () => {
@@ -13,20 +21,14 @@ const VisitorChart = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Mock data for demonstration
-        const mockData = generateMockData();
-        setChartData(mockData);
-        
-        // Uncomment to use real API when ready
-        // const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
-        // const rawData = await res.json();
-        // processData(rawData);
-        
+
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const rawData = await res.json();
+        processData(rawData);
       } catch (err) {
         console.error('Error loading chart data:', err);
         setError('Failed to load data');
-        setChartData(generateMockData()); // Fallback to mock data
+        setChartData([]); // Fallback to empty
       } finally {
         setLoading(false);
       }
@@ -37,54 +39,40 @@ const VisitorChart = () => {
 
   const processData = (rawData) => {
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    
-    const dayStats = daysOfWeek.reduce((acc, day) => {
-      acc[day] = { visitors: new Set(), pageViews: 0 };
-      return acc;
-    }, {});
+   const stats = {};
 
-    rawData.forEach(entry => {
-      const lastVisitDate = entry.lastVisit?.$date || entry.date;
-      if (!lastVisitDate) return;
+rawData.forEach((entry) => {
+  const dateStr = entry.lastVisit?.$date || entry.date;
+  if (!dateStr) return;
 
-      const day = dayjs(lastVisitDate).format('ddd');
-      const ip = entry.ip;
+  const dateKey = dayjs(dateStr).format('MMM D'); // e.g., "Jul 10"
+  const ip = entry.ip;
 
-      if (dayStats[day]) {
-        if (ip) dayStats[day].visitors.add(ip);
-        dayStats[day].pageViews += 1;
-      }
-    });
+  if (!stats[dateKey]) {
+    stats[dateKey] = { visitorsSet: new Set(), pageViews: 0 };
+  }
 
-    const formatted = daysOfWeek.map(day => ({
-      name: day,
-      visitors: dayStats[day]?.visitors.size || 0,
-      pageViews: dayStats[day]?.pageViews || 0
-    }));
+  stats[dateKey].pageViews += 1;
+  if (ip) stats[dateKey].visitorsSet.add(ip);
+});
 
-    setChartData(formatted);
-  };
+const finalData = Object.entries(stats).map(([date, value]) => ({
+  name: date,
+  visitors: value.visitorsSet.size,
+  pageViews: value.pageViews,
+})).sort((a, b) => dayjs(a.name).unix() - dayjs(b.name).unix());
 
-  const generateMockData = () => {
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return daysOfWeek.map(day => ({
-      name: day,
-      visitors: Math.floor(Math.random() * 100) + 50,
-      pageViews: Math.floor(Math.random() * 200) + 100
-    }));
+setChartData(finalData);
+
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
+    if (active && payload?.length) {
       return (
         <div className="bg-gray-900/90 backdrop-blur-sm border border-gray-700 rounded-lg p-3 shadow-lg">
           <p className="font-medium text-white">{label}</p>
           {payload.map((entry, index) => (
-            <p 
-              key={index} 
-              className="text-sm mt-1"
-              style={{ color: entry.color }}
-            >
+            <p key={index} className="text-sm mt-1" style={{ color: entry.color }}>
               <span className="font-medium capitalize">{entry.dataKey}:</span> {entry.value.toLocaleString()}
             </p>
           ))}
@@ -99,9 +87,7 @@ const VisitorChart = () => {
       <Card className="bg-black/20 backdrop-blur-lg border-white/10">
         <CardHeader>
           <CardTitle className="text-white">Visitor Trends</CardTitle>
-          <CardDescription className="text-purple-200">
-            Weekly visitor and page view analytics
-          </CardDescription>
+          <CardDescription className="text-purple-200">Weekly visitor and page view analytics</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
@@ -120,14 +106,11 @@ const VisitorChart = () => {
       <Card className="bg-black/20 backdrop-blur-lg border-white/10">
         <CardHeader>
           <CardTitle className="text-white">Visitor Trends</CardTitle>
-          <CardDescription className="text-purple-200">
-            Weekly visitor and page view analytics
-          </CardDescription>
+          <CardDescription className="text-purple-200">Weekly visitor and page view analytics</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex flex-col items-center justify-center space-y-2">
             <span className="text-red-400">⚠️ {error}</span>
-            <p className="text-purple-200 text-sm">Showing demo data</p>
           </div>
         </CardContent>
       </Card>
@@ -138,49 +121,26 @@ const VisitorChart = () => {
     <Card className="bg-black/20 backdrop-blur-lg border-white/10">
       <CardHeader>
         <CardTitle className="text-white">Visitor Trends</CardTitle>
-        <CardDescription className="text-purple-200">
-          Weekly visitor and page view analytics
-        </CardDescription>
+        <CardDescription className="text-purple-200">Weekly visitor and page view analytics</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={chartData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              className="text-xs"
-            >
+            <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="visitorsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="pageViewsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1}/>
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="#374151" 
-                vertical={false}
-              />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 12 }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#9ca3af', fontSize: 12 }}
-                width={40}
-              />
-              <Tooltip 
-                content={<CustomTooltip />}
-                cursor={{ stroke: '#4b5563', strokeWidth: 1 }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} width={40} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#4b5563', strokeWidth: 1 }} />
               <Area
                 type="monotone"
                 dataKey="visitors"

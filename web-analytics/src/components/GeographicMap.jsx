@@ -1,25 +1,72 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Globe, MapPin } from 'lucide-react';
 
-const GeographicMap = () => {
-  const countryData = [
-    { country: 'United States', visitors: 18245, percentage: 45.2, flag: '🇺🇸' },
-    { country: 'United Kingdom', visitors: 8932, percentage: 22.1, flag: '🇬🇧' },
-    { country: 'Canada', visitors: 4521, percentage: 11.2, flag: '🇨🇦' },
-    { country: 'Germany', visitors: 3210, percentage: 7.9, flag: '🇩🇪' },
-    { country: 'France', visitors: 2156, percentage: 5.3, flag: '🇫🇷' },
-    { country: 'Australia', visitors: 1876, percentage: 4.6, flag: '🇦🇺' },
-    { country: 'Japan', visitors: 1542, percentage: 3.8, flag: '🇯🇵' }
-  ];
+const countryFlags = {
+  US: '🇺🇸',
+  GB: '🇬🇧',
+  CA: '🇨🇦',
+  DE: '🇩🇪',
+  FR: '🇫🇷',
+  AU: '🇦🇺',
+  IN: '🇮🇳',
+  JP: '🇯🇵',
+  PK: '🇵🇰',
+  default: '🏳️'
+};
 
-  const cityData = [
-    { city: 'New York', country: 'US', visitors: 5420 },
-    { city: 'London', country: 'UK', visitors: 4321 },
-    { city: 'Toronto', country: 'CA', visitors: 2156 },
-    { city: 'Berlin', country: 'DE', visitors: 1876 },
-    { city: 'Paris', country: 'FR', visitors: 1542 }
-  ];
+const GeographicMap = () => {
+  const [countryData, setCountryData] = useState([]);
+  const [cityData, setCityData] = useState([]);
+
+  useEffect(() => {
+    const fetchGeoData = async () => {
+      try {
+        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const data = await res.json();
+
+        const countryCounts = {};
+        const cityCounts = {};
+
+        data.forEach(entry => {
+          const loc = entry.locationInfo || {};
+          const countryCode = loc.country || 'Unknown';
+          const countryKey = countryCode.toUpperCase();
+          const cityKey = loc.city || 'Unknown';
+
+          countryCounts[countryKey] = (countryCounts[countryKey] || 0) + 1;
+          cityCounts[`${cityKey},${countryKey}`] = (cityCounts[`${cityKey},${countryKey}`] || 0) + 1;
+        });
+
+        const total = Object.values(countryCounts).reduce((a, b) => a + b, 0);
+
+        const countryList = Object.entries(countryCounts)
+          .map(([country, visitors]) => ({
+            country,
+            visitors,
+            percentage: ((visitors / total) * 100).toFixed(1),
+            flag: countryFlags[country] || countryFlags.default
+          }))
+          .sort((a, b) => b.visitors - a.visitors)
+          .slice(0, 7); // Top 7 countries
+
+        const cityList = Object.entries(cityCounts)
+          .map(([key, visitors]) => {
+            const [city, country] = key.split(',');
+            return { city, country, visitors };
+          })
+          .sort((a, b) => b.visitors - a.visitors)
+          .slice(0, 5); // Top 5 cities
+
+        setCountryData(countryList);
+        setCityData(cityList);
+      } catch (error) {
+        console.error('Error fetching geographic data:', error);
+      }
+    };
+
+    fetchGeoData();
+  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -48,7 +95,7 @@ const GeographicMap = () => {
                 <div className="text-right">
                   <p className="text-white font-semibold">{country.visitors.toLocaleString()}</p>
                   <div className="w-20 h-2 bg-white/10 rounded-full mt-1">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000"
                       style={{ width: `${country.percentage * 2}%` }}
                     ></div>
@@ -93,4 +140,5 @@ const GeographicMap = () => {
     </div>
   );
 };
+
 export default GeographicMap;

@@ -28,6 +28,7 @@ const Index = () => {
     totalClicks: 0,
     totalTimeSpent: 0,
   });
+  const [topReferrers, setTopReferrers] = useState([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -45,12 +46,26 @@ const Index = () => {
         const uniqueDevices = new Set();
         let clicks = 0;
         let timeSpent = 0;
+        const referrerCount = {};
 
         data.forEach(entry => {
           uniqueDevices.add(entry.device_id);
           clicks += entry.clicks || 0;
           timeSpent += entry.timeOnPage || 0;
+
+          const ref = entry.referrer ? new URL(entry.referrer).hostname : "Direct";
+          referrerCount[ref] = (referrerCount[ref] || 0) + 1;
         });
+
+        const totalVisits = Object.values(referrerCount).reduce((a, b) => a + b, 0);
+        const topReferrerList = Object.entries(referrerCount)
+          .map(([site, visitors]) => ({
+            site,
+            visitors,
+            percentage: ((visitors / totalVisits) * 100).toFixed(1),
+          }))
+          .sort((a, b) => b.visitors - a.visitors)
+          .slice(0, 5);
 
         setAnalytics({
           totalVisitors: uniqueDevices.size,
@@ -58,6 +73,8 @@ const Index = () => {
           totalClicks: clicks,
           totalTimeSpent: timeSpent,
         });
+
+        setTopReferrers(topReferrerList);
       } catch (error) {
         console.error('Error fetching analytics data:', error);
       }
@@ -172,13 +189,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { site: 'google.com', visitors: 15420, percentage: 42.3 },
-                      { site: 'facebook.com', visitors: 8932, percentage: 24.5 },
-                      { site: 'twitter.com', visitors: 4521, percentage: 12.4 },
-                      { site: 'linkedin.com', visitors: 3210, percentage: 8.8 },
-                      { site: 'youtube.com', visitors: 2156, percentage: 5.9 }
-                    ].map((referrer, index) => (
+                    {topReferrers.map((referrer, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center">
