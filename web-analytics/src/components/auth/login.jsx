@@ -7,6 +7,7 @@ const Login = () => {
     web_id: "",
     password: "",
   });
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -37,7 +38,7 @@ const Login = () => {
       const data = await response.json();
       console.log("Login successful:", data);
 
-      // Optional: Store token or user info
+      // Optionally save token or user
       // localStorage.setItem("token", data.token);
       // localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -49,30 +50,23 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <LogIn className="w-8 h-8 text-blue-600" />
+    <div className="h-screen w-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center overflow-hidden">
+      <div className="w-full max-w-sm">
+        <div className="bg-white rounded-xl shadow px-5 py-6 border border-gray-100">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mb-2">
+              <LogIn className="w-5 h-5 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back
-            </h1>
-            <p className="text-gray-600">Please sign in to your account</p>
+            <h1 className="text-xl font-semibold text-gray-800">Welcome Back</h1>
+            <p className="text-gray-500 text-xs">Login to your account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-3 text-sm">
             {/* Web ID */}
             <div>
-              <label
-                htmlFor="web_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Web ID
-              </label>
+              <label htmlFor="web_id" className="block text-xs text-gray-700 mb-1">Web ID</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   id="web_id"
@@ -80,22 +74,17 @@ const Login = () => {
                   value={formData.web_id}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                  placeholder="Enter your Web ID"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter Web ID"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Password
-              </label>
+              <label htmlFor="password" className="block text-xs text-gray-700 mb-1">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="password"
                   id="password"
@@ -103,48 +92,36 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                  placeholder="Enter your password"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter Password"
                 />
               </div>
             </div>
 
-            {/* Remember & Forgot */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
+            {/* Remember + Forgot */}
+            <div className="flex items-center justify-between text-xs">
+              <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                <span className="text-gray-600">Remember me</span>
               </label>
-              <Link
-                to="#"
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                Forgot password?
-              </Link>
+              <Link to="#" className="text-blue-600 hover:underline">Forgot password?</Link>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full bg-blue-600 text-white py-2 text-sm rounded hover:bg-blue-700 transition font-medium"
             >
               Sign In
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                to="/signup"
-                className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
-              >
-                Sign up here
-              </Link>
-            </p>
+          <div className="mt-4 text-center text-xs text-gray-600">
+            Don’t have an account?{" "}
+            <Link to="/" className="text-blue-600 font-medium underline">Sign up</Link>
           </div>
         </div>
       </div>

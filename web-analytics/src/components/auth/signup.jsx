@@ -15,10 +15,7 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -32,9 +29,7 @@ const Signup = () => {
     try {
       const response = await fetch("https://webanalytics.softsincs.com/api/signup/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -44,170 +39,95 @@ const Signup = () => {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Signup failed: ${errorData.detail || "Unknown error"}`);
+        alert(`Signup failed: ${data.detail || "Unknown error"}`);
         return;
       }
 
-      const data = await response.json();
-      console.log("Signup successful:", data);
-      alert("Signup successful! Redirecting to login...");
+      if (data.script) {
+        const userConfirmed = window.confirm(
+          "Signup successful!\n\nCopy the script below and paste it into your website's HTML:\n\n" +
+          data.script +
+          "\n\nClick OK to copy it to clipboard."
+        );
+
+        if (userConfirmed) {
+          await navigator.clipboard.writeText(data.script);
+          alert("Script copied to clipboard! Redirecting to login...");
+        } else {
+          alert("You can copy the script later from your dashboard.");
+        }
+      } else {
+        alert("Signup successful! Redirecting to login...");
+      }
+
       navigate("/login");
+
     } catch (error) {
       console.error("Signup error:", error);
-      alert("An error occurred during signup. Please try again.");
+      alert("An error occurred. Please try again.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-              <UserPlus className="w-8 h-8 text-indigo-600" />
+    <div className="h-screen w-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center overflow-hidden">
+      <div className="w-full max-w-sm">
+        <div className="bg-white rounded-xl shadow px-5 py-5 border border-gray-100">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-full mb-1">
+              <UserPlus className="w-5 h-5 text-indigo-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-            <p className="text-gray-600">Sign up to get started</p>
+            <h1 className="text-lg font-bold text-gray-800">Sign Up</h1>
+            <p className="text-gray-500 text-xs">Create your account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                />
+          <form onSubmit={handleSubmit} className="space-y-3 text-sm">
+            {[
+              { id: 'name', label: 'Full Name', type: 'text', icon: <User className="w-4 h-4" /> },
+              { id: 'email', label: 'Email', type: 'email', icon: <Mail className="w-4 h-4" /> },
+              { id: 'domain', label: 'Domain', type: 'text', icon: <Globe className="w-4 h-4" /> },
+              { id: 'web_id', label: 'Web ID', type: 'text', icon: <Hash className="w-4 h-4" /> },
+              { id: 'password', label: 'Password', type: 'password', icon: <Lock className="w-4 h-4" /> },
+              { id: 'confirmPassword', label: 'Confirm Password', type: 'password', icon: <Lock className="w-4 h-4" /> }
+            ].map(({ id, label, type, icon }) => (
+              <div key={id}>
+                <label htmlFor={id} className="block text-gray-700 text-xs mb-1">{label}</label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</div>
+                  <input
+                    type={type}
+                    id={id}
+                    name={id}
+                    value={formData[id]}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder={label}
+                  />
+                </div>
               </div>
-            </div>
+            ))}
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
-
-            {/* Domain */}
-            <div>
-              <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-2">Domain</label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  id="domain"
-                  name="domain"
-                  value={formData.domain}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="yourdomain.com"
-                />
-              </div>
-            </div>
-
-            {/* Web ID */}
-            <div>
-              <label htmlFor="web_id" className="block text-sm font-medium text-gray-700 mb-2">Web ID</label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  id="web_id"
-                  name="web_id"
-                  value={formData.web_id}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter Web ID"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Create a password"
-                />
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Confirm your password"
-                />
-              </div>
-            </div>
-
-            {/* Terms & Conditions */}
             <div className="flex items-center">
-              <input type="checkbox" required className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-              <span className="ml-2 text-sm text-gray-600">
-                I agree to the{' '}
-                <Link to="#" className="text-indigo-600 hover:text-indigo-800">Terms of Service</Link>{' '}
-                and{' '}
-                <Link to="#" className="text-indigo-600 hover:text-indigo-800">Privacy Policy</Link>
+              <input type="checkbox" required className="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded" />
+              <span className="ml-2 text-gray-600 text-xs">
+                I agree to <Link to="#" className="text-indigo-600 underline">Terms</Link> & <Link to="#" className="text-indigo-600 underline">Privacy</Link>
               </span>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-blue-700 focus:ring-4 focus:ring-indigo-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full bg-indigo-600 text-white py-2 text-sm rounded hover:bg-indigo-700 transition font-medium"
             >
               Create Account
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                Sign in here
-              </Link>
-            </p>
+          <div className="mt-3 text-center text-xs text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-indigo-600 font-medium underline">Login</Link>
           </div>
         </div>
       </div>
