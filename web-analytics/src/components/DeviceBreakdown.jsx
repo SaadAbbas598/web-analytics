@@ -22,7 +22,7 @@ const VisitorChart = () => {
         setLoading(true);
         setError(null);
 
-        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const res = await fetch('https://webanalytics.softsincs.com/api/tracking/all/');
         const rawData = await res.json();
         processData(rawData);
       } catch (err) {

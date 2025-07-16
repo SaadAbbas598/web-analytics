@@ -42,7 +42,7 @@ const Login = () => {
       // localStorage.setItem("token", data.token);
       // localStorage.setItem("user", JSON.stringify(data.user));
 
-      navigate("/");
+      navigate("/index");
     } catch (error) {
       console.error("Login error:", error);
       alert("An error occurred while logging in. Please try again.");

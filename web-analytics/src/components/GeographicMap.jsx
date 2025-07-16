@@ -22,7 +22,7 @@ const GeographicMap = () => {
   useEffect(() => {
     const fetchGeoData = async () => {
       try {
-        const res = await fetch('http://webanalytics.softsincs.com/api/tracking/all/');
+        const res = await fetch('https://webanalytics.softsincs.com/api/tracking/all/');
         const data = await res.json();
 
         const countryCounts = {};
