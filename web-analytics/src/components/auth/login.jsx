@@ -29,20 +29,21 @@ const Login = () => {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Login failed: ${errorData.detail || "Invalid credentials"}`);
+        alert(`Login failed: ${data.detail || "Invalid credentials"}`);
         return;
       }
 
-      const data = await response.json();
-      console.log("Login successful:", data);
-
-      // Optionally save token or user
-      // localStorage.setItem("token", data.token);
-      // localStorage.setItem("user", JSON.stringify(data.user));
-
-      navigate("/index");
+      // ✅ Save token to localStorage
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        alert("Login successful!");
+        navigate("/index");
+      } else {
+        alert("No token returned. Login failed.");
+      }
     } catch (error) {
       console.error("Login error:", error);
       alert("An error occurred while logging in. Please try again.");

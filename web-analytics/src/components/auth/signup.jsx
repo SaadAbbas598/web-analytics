@@ -55,15 +55,19 @@ const Signup = () => {
 
         if (userConfirmed) {
           await navigator.clipboard.writeText(data.script);
-          alert("Script copied to clipboard! Redirecting to login...");
+          alert("Script copied to clipboard!");
         } else {
           alert("You can copy the script later from your dashboard.");
         }
       } else {
-        alert("Signup successful! Redirecting to login...");
+        alert("Signup successful!");
       }
 
-      navigate("/login");
+      // ✅ Save user data locally for user management
+      localStorage.setItem("userData", JSON.stringify(data));
+
+      // ✅ Redirect to dashboard
+      navigate("/dashboard");
 
     } catch (error) {
       console.error("Signup error:", error);
