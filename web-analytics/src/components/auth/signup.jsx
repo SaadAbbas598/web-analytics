@@ -63,10 +63,7 @@ const Signup = () => {
         alert("Signup successful!");
       }
 
-      // ✅ Save user data locally for user management
       localStorage.setItem("userData", JSON.stringify(data));
-
-      // ✅ Redirect to dashboard
       navigate("/dashboard");
 
     } catch (error) {
@@ -87,7 +84,7 @@ const Signup = () => {
             <p className="text-gray-500 text-xs">Create your account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3 text-sm">
+          <form onSubmit={handleSubmit} className="space-y-3 text-sm" autoComplete="off">
             {[
               { id: 'name', label: 'Full Name', type: 'text', icon: <User className="w-4 h-4" /> },
               { id: 'email', label: 'Email', type: 'email', icon: <Mail className="w-4 h-4" /> },
@@ -107,6 +104,7 @@ const Signup = () => {
                     value={formData[id]}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder={label}
                   />
