@@ -12,17 +12,29 @@ const Signup = () => {
     confirmPassword: ''
   });
 
+  const [formErrors, setFormErrors] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormErrors({ ...formErrors, [e.target.name]: '' }); // clear error on change
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const errors = {};
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    if (!formData.email.includes('@')) {
+      errors.email = "Enter a valid email";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -42,15 +54,31 @@ const Signup = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(`Signup failed: ${data.detail || "Unknown error"}`);
+        const apiErrors = {};
+
+        // Example backend messages — adjust as per your API
+        if (data.detail?.includes("email")) {
+          apiErrors.email = "Email already exists";
+        }
+        if (data.detail?.includes("web_id")) {
+          apiErrors.web_id = "Web ID already taken";
+        }
+
+        if (Object.keys(apiErrors).length === 0) {
+          alert(`Signup failed: ${data.detail || "Unknown error occurred"}`);
+        } else {
+          setFormErrors(apiErrors);
+        }
+
         return;
       }
 
+      // Success
       if (data.script) {
         const userConfirmed = window.confirm(
           "Signup successful!\n\nCopy the script below and paste it into your website's HTML:\n\n" +
-          data.script +
-          "\n\nClick OK to copy it to clipboard."
+            data.script +
+            "\n\nClick OK to copy it to clipboard."
         );
 
         if (userConfirmed) {
@@ -68,7 +96,7 @@ const Signup = () => {
 
     } catch (error) {
       console.error("Signup error:", error);
-      alert("An error occurred. Please try again.");
+      alert("An error occurred. Please check your internet connection or try again.");
     }
   };
 
@@ -105,10 +133,15 @@ const Signup = () => {
                     onChange={handleChange}
                     required
                     autoComplete="off"
-                    className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full pl-9 pr-3 py-1.5 text-xs border rounded bg-gray-50 focus:outline-none ${
+                      formErrors[id]
+                        ? "border-red-400 focus:ring-red-400"
+                        : "border-gray-300 focus:ring-indigo-500"
+                    }`}
                     placeholder={label}
                   />
                 </div>
+                {formErrors[id] && <p className="text-red-500 text-xs mt-1">{formErrors[id]}</p>}
               </div>
             ))}
 
